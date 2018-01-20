@@ -10,7 +10,7 @@ var input = require('diffy/input')()
 var fs = require('fs')
 var path = require('path')
 
-var FOLDER = '/sys/class/backlight/intel_backlight'
+var FOLDER = guessBestController('/sys/class/backlight/');
 var BRIGHTNESS_FILE = path.join(FOLDER, 'brightness')
 var MAX_BRIGHTNESS_FILE = path.join(FOLDER, 'max_brightness')
 var MAX = readInt(MAX_BRIGHTNESS_FILE)
@@ -59,3 +59,14 @@ function render () {
 }
 
 function noop () {}
+
+function guessBestController(basePath) {
+  var candidates = fs.readdirSync(basePath);
+  for(var i=0; i<candidates.length; i++) {
+    var type = fs.readFileSync(path.join(basePath,candidates[i],'type'), 'ascii');
+    if (type.substr(0,3) === 'raw') {
+      return path.join(basePath, candidates[i]);
+    }
+  }
+  return candidates[0] || null;
+}
